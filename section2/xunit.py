@@ -6,33 +6,30 @@ class TestCase:
         self.name = name
     def setUp(self):
         pass
+    def tearDown(self):
+        pass
     #  テストメソッドを動的に呼び出す
     def run(self):
         self.setUp()
         method = getattr(self, self.name)
         method()
+        self.tearDown()
 
 # テストメソッドが実行されたか記録するクラス
 class WasRun(TestCase):
     def setUp(self):
-        self.wasRun = None
-        self.wasSetUp = 1
         self.log = "setUp "
     # メソッドが実行されたか記録するメソッド
     def testMethod(self):
-        self.wasRun = 1
+        self.log = self.log + "testMethod "
+    def tearDown(self):
+        self.log = self.log + "tearDown "
 
 # テストスイートをテストするクラス
 class TestCaseTest(TestCase):
-    def setUp(self):
-        self.test = WasRun("testMethod")
-    def testRunning(self):
-        self.test.run()
-        assert(self.test.wasRun)
-    def testSetUp(self):
-        print('testsetup')
-        self.test.run()
-        assert("setUp " == self.test.log)
+    def testTemplateMethod(self):
+        test = WasRun("testMethod")
+        test.run()
+        assert("setUp testMethod tearDown " == test.log)
 
-TestCaseTest("testRunning").run()
-TestCaseTest("testSetUp").run()
+TestCaseTest("testTemplateMethod").run()
