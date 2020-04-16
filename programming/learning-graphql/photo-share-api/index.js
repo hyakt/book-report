@@ -3,11 +3,38 @@ const { ApolloServer } = require('apollo-server')
 const typeDefs = `
 type Query {
   totalPhotos: Int!
+  allPhotos: [Photo!]!
+}
+type Mutation {
+  postPhoto(name: String! description: String): Photo!
+}
+type Photo {
+  id: ID!
+  url: String!
+  name: String
+  description: String
 }
 `
+var _id = 0
+var photos = []
+
 const resolvers = {
   Query: {
-    totalPhotos: () => 42
+    totalPhotos: () => photos.length,
+    allPhotos: () => photos
+  },
+  Mutation: {
+    postPhoto(parent, args) {
+      var newPhoto = {
+        id: _id++,
+        ...args
+      }
+      photos.push(newPhoto)
+      return newPhoto
+    }
+  },
+  Photo: {
+    url: parent => `http://hyakt.dev/img/${parent.id}.jpg`
   }
 }
 
