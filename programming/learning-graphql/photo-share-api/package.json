@@ -1,0 +1,11 @@
+{
+  "name": "photo-share-api",
+  "version": "1.0.0",
+  "description": "初めてのGraphQLのサーバ側実装",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
