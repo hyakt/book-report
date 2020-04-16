@@ -4,8 +4,14 @@
   "description": "初めてのGraphQLのサーバ側実装",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon -e js,json,graphql"
   },
-  "author": "",
-  "license": "ISC"
+  "author": "hyakt",
+  "license": "ISC",
+  "dependencies": {
+    "apollo-server": "^2.12.0",
+    "graphql": "^15.0.0",
+    "nodemon": "^2.0.3"
+  }
 }
