@@ -1,143 +1,21 @@
-const { ApolloServer } = require('apollo-server')
-const  { GraphQLScalarType } = require('graphql')
+const { ApolloServer } = require('apollo-server-express')
+const express = require('express')
+const expressPlayground = require('graphql-playground-middleware-express').default
 
-const typeDefs = `
-scalar DateTime
-type Query {
-  totalPhotos: Int!
-  allPhotos(after: DateTime): [Photo!]!
-}
-type Mutation {
-  postPhoto(input: PostPhotoInput!): Photo!
-}
-enum PhotoCategory {
-  SELFIE
-  PORTRAIT
-  ACTION
-  LANDSCAPE
-  GRAPHIC
-}
-type Photo {
-  id: ID!
-  url: String!
-  name: String
-  description: String
-  category: PhotoCategory!
-  postedBy: User!
-  taggedUsers: [User!]!
-  created: DateTime!
-}
-input PostPhotoInput {
-  name: String!
-  category: PhotoCategory=PORTRAIT
-  description: String
-}
-type User {
-  githubLogin: ID!
-  name: String
-  avatar: String
-  postedPhotos: [Photo!]!
-  inPhotos: [Photo!]!
-}
-`
-var _id = 0
+const { readFileSync } = require('fs')
 
-var users = [
-  {"githubLogin": "pochi", "name": "fumi"},
-  {"githubLogin": "uni", "name": "ayano"}
-]
+const typeDefs = readFileSync('./typeDefs.graphql', 'utf-8')
+const resolvers = require('./resolvers')
 
-var photos = [
-  {
-    "id": "1",
-    "name":"Skytree",
-    "description":"Asakusa! Shitamachi!",
-    "category": "LANDSCAPE",
-    "githubUser": "pochi",
-    "created": "3-28-1977"
-  },
-  {
-    "id": "2",
-    "name":"Tokyo Tower",
-    "description":"High Tower",
-    "category": "LANDSCAPE",
-    "githubUser": "pochi",
-    "created": "3-28-1977"
-  },
-  {
-    "id": "3",
-    "name":"Paris",
-    "description":"Paris cute!",
-    "category": "LANDSCAPE",
-    "githubUser": "uni",
-    "created": "3-28-1977"
-  },
-  {
-    "id": "4",
-    "name":"Gaisenmon",
-    "description":"nazo",
-    "category": "LANDSCAPE",
-    "githubUser": "uni",
-    "created": "3-28-2000"
-  }
-]
+var app = express()
 
-var tags = [
-  { "photoID": "1", "userID": "uni" },
-  { "photoID": "2", "userID": "uni" },
-  { "photoID": "3", "userID": "pochi" },
-  { "photoID": "4", "userID": "pochi" },
-]
+const server = new ApolloServer({ typeDefs, resolvers})
 
-const resolvers = {
-  Query: {
-    totalPhotos: () => photos.length,
-    allPhotos: (parent, args) => {
-      return photos
-    }
-  },
-  Mutation: {
-    postPhoto(parent, args) {
-      var newPhoto = {
-        id: _id++,
-        ...args.input,
-        created: new Date()
-      }
-      photos.push(newPhoto)
-      return newPhoto
-    }
-  },
-  Photo: {
-    url: parent => `http://hyakt.dev/img/${parent.id}.jpg`,
-    postedBy: parent => users.find(u => u.githubLogin === parent.githubUser),
-    taggedUsers: parent => tags
-      .filter(tag => tag.photoID === parent.id)
-      .map(tag => tag.userID)
-      .map(userID => users.find(u => u.githubLogin === userID))
-  },
-  User: {
-    postedPhotos: parent => {
-      return photos.filter(p => p.githubUser === parent.githubLogin )
-    },
-    inPhotos: parent => tags
-      .filter(tag => tag.userID === parent.id)
-      .map(tag => tag.photoID)
-      .map(photoID => photo.find(p => p.id === photoID))
-  },
-  DateTime: new GraphQLScalarType({
-    name: `DateTime`,
-    description: `A valid date time value.`,
-    parseValue: value => new Date(value),
-    serialize: value => new Date(value).toISOString(),
-    parseLiteral: ast => ast.value
-  })
-}
+server.applyMiddleware({ app })
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers
-})
+app.get('/', (req, res) => res.end('Welcome to the PhotoShare API'))
+app.get('/playground', expressPlayground({ endpoint: `/graphql`}))
 
-server.listen().then(({url}) => {
-  console.log(`GraphQL Service running on ${url}`)
-})
+app.listen({port:5000} , () => (
+  console.log(`GraphQL Server ruuning @ http://localhost:5000${server.graphqlPath}`)
+))
