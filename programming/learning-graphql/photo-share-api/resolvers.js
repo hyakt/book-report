@@ -1,4 +1,9 @@
 const { GraphQLScalarType } = require('graphql')
+const fetch = require('node-fetch')
+const {
+  authorizationGithubUrl,
+  authorizeWithGithub
+} = require('./lib.js')
 
 var _id = 0
 
@@ -51,29 +56,92 @@ var tags = [
 
 const resolvers = {
   Query: {
+    me: (parent, args, { currentUser }) => currentUser,
+    authorizationGithubUrl: () => authorizationGithubUrl(process.env.CLIENT_ID),
     totalPhotos: (parent, args, { db }) => db.collection('photos').estimatedDocumentCount(),
     allPhotos: (parent, args, { db }) => db.collection('photos').find().toArray(),
     totalUsers: (parent, args, { db }) => db.collection('users').estimatedDocumentCount(),
     allUsers: (parent, args, { db }) => db.collection('users').find().toArray()
   },
   Mutation: {
-    postPhoto(parent, args) {
-      var newPhoto = {
-        id: _id++,
+    addFakeUsers: async (root, { count }, { db }) => {
+      const randomUserApi = `https://randomuser.me/api?results=${count}`
+
+      const { results } = await fetch(randomUserApi).then(res => res.json())
+
+      const users = results.map(r => ({
+        githubLogin: r.login.username,
+        name: `${r.name.first} ${r.name.last}`,
+        avatar: r.picture.thumbnail,
+        githubToken: r.login.sha1
+      }))
+
+      await db.collection('users').insert(users)
+
+      return users
+    },
+    fakeUserAuth: async (parent, { githubLogin }, { db }) => {
+      const user = await db.collection('users').findOne({ githubLogin })
+      console.log(user)
+      if (!user) {
+        throw new Error(`Cannnot find user with githubLogin "${githubLogin}"`)
+      }
+      return {
+        token: user.githubToken,
+        user: user
+      }
+    },
+    githubAuth: async (parent, { code }, { db }) => {
+      const { CLIENT_ID, CLIENT_SECRET } = process.env
+      let {
+        message,
+        access_token,
+        avatar_url,
+        login,
+        name
+      } = await authorizeWithGithub({
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        code
+      })
+
+      if (message){
+        throw new Error(message)
+      }
+
+      let latestUserInfo = {
+        name,
+        githubLogin: login,
+        githubToken: access_token,
+        avatar: avatar_url
+      }
+
+      const { ops:[user] } = await db.collection('users').replaceOne({ githubLogin: login }, latestUserInfo, { upsert: true})
+
+      return { user, token: access_token }
+    },
+    postPhoto: async (parent, args, { db, currentUser }) => {
+      if (!currentUser) {
+        throw new Error('only an authorized use ca post a photo')
+      }
+      const newPhoto = {
         ...args.input,
+        userID: currentUser.githubLogin,
         created: new Date()
       }
-      photos.push(newPhoto)
+      const { insertedIds } = await db.collection('photos').insert(newPhoto)
+      newPhoto.id = insertedIds[0]
+
       return newPhoto
     }
   },
   Photo: {
-    url: parent => `http://hyakt.dev/img/${parent.id}.jpg`,
-    postedBy: parent => users.find(u => u.githubLogin === parent.githubUser),
-    taggedUsers: parent => tags
-      .filter(tag => tag.photoID === parent.id)
-      .map(tag => tag.userID)
-      .map(userID => users.find(u => u.githubLogin === userID))
+    id: parent => parent.id || parent._id,
+    url: parent => `http://hyakt.dev/img/${parent._id}.jpg`,
+    postedBy: (parent, args, { db }) => {
+      console.log(parent)
+      return db.collection('users').findOne({ githubLogin: parent.userID })
+    }
   },
   User: {
     postedPhotos: parent => {

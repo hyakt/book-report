@@ -1,6 +1,8 @@
 scalar DateTime
 
 type Query {
+  me: User
+  authorizationGithubUrl: String!
   totalPhotos: Int!
   allPhotos(after: DateTime): [Photo!]!
   totalUsers: Int!
@@ -8,6 +10,9 @@ type Query {
 }
 
 type Mutation {
+  addFakeUsers(count: Int = 1): [User!]!
+  fakeUserAuth(githubLogin: ID!): AuthPayload!
+  githubAuth(code: String!): AuthPayload
   postPhoto(input: PostPhotoInput!): Photo!
 }
 
@@ -42,4 +47,9 @@ type User {
   avatar: String
   postedPhotos: [Photo!]!
   inPhotos: [Photo!]!
+}
+
+type AuthPayload {
+  token: String!
+  user: User!
 }

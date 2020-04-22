@@ -10,21 +10,26 @@ const { readFileSync } = require('fs')
 const typeDefs = readFileSync('./typeDefs.graphql', 'utf-8')
 const resolvers = require('./resolvers')
 
-
 const start = async () => {
   const app = express()
 
-  const MONGO_DB = process.env.DB_HOST
+  const { DB_HOST } = process.env
 
   const client = await MongoClient.connect(
-    MONGO_DB,
+    DB_HOST,
     { useNewUrlParser: true }
   )
 
   const db = client.db()
-  const context = { db }
 
-  const server = new ApolloServer({ typeDefs, resolvers, context})
+  const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+    context: async ({ req }) => {
+      const githubToken = req.headers.authorization
+      const currentUser = await db.collection('users').findOne({ githubToken })
+      return { db, currentUser }
+    }})
   server.applyMiddleware({ app })
 
   app.get('/', (req, res) => res.end('Welcome to the PhotoShare API'))
