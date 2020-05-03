@@ -70,6 +70,7 @@ const resolvers = {
       const { results } = await fetch(randomUserApi).then(res => res.json())
 
       const users = results.map(r => ({
+        isFake: true,
         githubLogin: r.login.username,
         name: `${r.name.first} ${r.name.last}`,
         avatar: r.picture.thumbnail,
@@ -79,6 +80,14 @@ const resolvers = {
       await db.collection('users').insert(users)
 
       return users
+    },
+    removeFakeUsers: async (root, args, { db }) => {
+      try{
+        await db.collection('users').remove({isFake: true})
+      } catch (err) {
+        return false
+      }
+      return true
     },
     fakeUserAuth: async (parent, { githubLogin }, { db }) => {
       const user = await db.collection('users').findOne({ githubLogin })
