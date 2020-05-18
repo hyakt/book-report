@@ -35,27 +35,27 @@ const UserList = ({ count, users, refetchUsers }) => (
       mutation={ADD_FAKE_USERS_MUTATION}
       variables={{ count: 1}}
       refetchQueries={[{query: ROOT_QUERY}]}
-      >
+    >
       {addFakeUsers => <button onClick={addFakeUsers}>Add FakeUsers</button>}
-      </Mutation>
-      <ul>
+    </Mutation>
+    <ul>
       {users.map(user =>
-      <UserListItem
-      key={user.githubLogin}
-      name={user.name}
-      avatar={user.avatar}
-      />
+        <UserListItem
+          key={user.githubLogin}
+          name={user.name}
+          avatar={user.avatar}
+        />
       )}
-      </ul>
-      </div>
+    </ul>
+  </div>
 )
 
-        const UserListItem = ({ name, avatar }) => (
-          <li>
-            <img src={avatar} width={48} height={48} alt="" />
-            {name}
-          </li>
-        )
+const UserListItem = ({ name, avatar }) => (
+  <li>
+    <img src={avatar} width={48} height={48} alt="" />
+    {name}
+  </li>
+)
 
 
-        export default Users
+export default Users
