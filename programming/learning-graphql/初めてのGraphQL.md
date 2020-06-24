@@ -384,3 +384,4 @@ https://github.com/hyakt/book-report/tree/master/programming/learning-graphql/ph
 ### 7.2 ファイルアップロード
 ### 7.3 セキュリティ
 ### 7.4 次の段階にすすむ
+コミュニティの話など
