@@ -320,28 +320,63 @@ type Query {
 ### 4.4 ミューテーション
 - アプリケーションで使われる動詞と対応づくのが望ましい
 - サービスに対してできることがミューテーションとして定義される
+``` graphql
+type Mutation {
+    postPhoto(
+        name: String!
+        description: String
+        category: PhotoCategory=PORTRAIT
+    ): Photo!
+}
+```
 
 ### 4.5 入力型
+- 多数の引数をうまく扱うためには入力型(input型)を利用する
+- mutationを作成する時`$input`クエリ変数はPostPhotoInput!入力値と一致している必要がある
+``` graphql
+input PostPhotoInput {
+    name: String!
+    description: String
+    category: PhotoCategory=PORTRAIT
+}
+
+type Mutation {
+    postPhoto(input: PostPhotoInput!): Photo!
+}
+
+mutation newPhoto
+```
+
 ### 4.6 返却型
+- 返却時にもカスタムした型を定義することができる
+
 ### 4.7 サブスクリプション
+- Subscription型はGraphQLというスキーマ定義言語の他のオブジェクト型と同じ
+
 ### 4.8 スキーマのドキュメント化
+- GraphQLのスキーマを作成する時、それぞれのフィールドにスキーマの型やフィールドに対する説明を付与できる
+
+``` graphql
+"""
+最低一度はGitHubで認可されたユーザ
+"""
+type User {
+    """
+    ユーザのログインID
+    """
+    githubLogin: ID!
+}
+```
 
 5章 GraphQLサーバーの実装
 ---
-### 5.1 プロジェクトのセットアップ
-### 5.2 リゾルバ
-### 5.3 apollo-server-express
-### 5.4 コンテキスト
-### 5.5 GitHub認可
-### 5.6 まとめ
+下記に実装
+https://github.com/hyakt/book-report/tree/master/programming/learning-graphql/photo-share-client
 
 6章 GraphQLクライアントの実装
 ---
-### 6.1 GraphQL APIの利用
-### 6.2 Apollo Client
-### 6.3 Apollo ClientとReact
-### 6.4 認可
-### 6.5 キャッシュ
+下記に実装
+https://github.com/hyakt/book-report/tree/master/programming/learning-graphql/photo-share-client
 
 7章 GraphQLの実戦投入にあたって
 ---
